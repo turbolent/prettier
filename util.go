@@ -32,15 +32,24 @@ func WrapBraces(doc, line Doc) Doc {
 // are separated with the specified separator document
 //
 func Join(sep Doc, docs ...Doc) Doc {
-	result := make([]Doc, 0, len(docs))
+	switch len(docs) {
+	case 0:
+		return nil
 
-	for i, doc := range docs {
-		if i > 0 {
-			result = append(result, sep)
+	case 1:
+		return docs[0]
+
+	default:
+		result := make([]Doc, 0, len(docs))
+
+		for i, doc := range docs {
+			if i > 0 {
+				result = append(result, sep)
+			}
+
+			result = append(result, doc)
 		}
 
-		result = append(result, doc)
+		return Concat(result)
 	}
-
-	return Concat(result)
 }
