@@ -9,6 +9,6 @@ import (
 // so that the maximum line width is not exceeded
 //
 func Prettier(writer io.StringWriter, doc Doc, maxLineWidth int, indent string) {
-	d := pretty(maxLineWidth, doc)
+	d := pretty(maxLineWidth, len(indent), doc)
 	layout(writer, d, indent)
 }

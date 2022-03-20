@@ -9,7 +9,10 @@ func fits(remainingWidth int, doc simpleDoc) bool {
 	}
 
 	if doc, ok := doc.(simpleText); ok {
-		return fits(remainingWidth-len(doc.text), doc.next.get())
+		return fits(
+			remainingWidth-len(doc.text),
+			doc.next.get(),
+		)
 	}
 
 	return true
@@ -20,14 +23,19 @@ func fits(remainingWidth int, doc simpleDoc) bool {
 // and the line width, the number of characters already placed
 // on the current line (including indentation)
 //
-func best(maxLineWidth int, lineWidth int, docs *layoutDocs) simpleDoc {
+func best(maxLineWidth, lineWidth, indentWidth int, docs *layoutDocs) simpleDoc {
 	if docs == nil {
 		return nil
 	}
 
 	// Ignore the empty document (nil)
 	if docs.doc == nil {
-		return best(maxLineWidth, lineWidth, docs.next)
+		return best(
+			maxLineWidth,
+			lineWidth,
+			indentWidth,
+			docs.next,
+		)
 	}
 
 	switch doc := docs.doc.(type) {
@@ -42,12 +50,18 @@ func best(maxLineWidth int, lineWidth int, docs *layoutDocs) simpleDoc {
 				next:   newDocs,
 			}
 		}
-		return best(maxLineWidth, lineWidth, newDocs)
+		return best(
+			maxLineWidth,
+			lineWidth,
+			indentWidth,
+			newDocs,
+		)
 
 	case Indent:
 		return best(
 			maxLineWidth,
 			lineWidth,
+			indentWidth,
 			&layoutDocs{
 				indent: docs.indent + 1,
 				doc:    doc.Doc,
@@ -64,6 +78,7 @@ func best(maxLineWidth int, lineWidth int, docs *layoutDocs) simpleDoc {
 		flattenedDoc := best(
 			maxLineWidth,
 			lineWidth,
+			indentWidth,
 			newDocs,
 		)
 		if fits(maxLineWidth-lineWidth, flattenedDoc) {
@@ -71,14 +86,19 @@ func best(maxLineWidth int, lineWidth int, docs *layoutDocs) simpleDoc {
 		}
 
 		newDocs.doc = doc.Doc
-		return best(maxLineWidth, lineWidth, newDocs)
+		return best(maxLineWidth, lineWidth, indentWidth, newDocs)
 
 	case Line, SoftLine, HardLine:
 		return simpleLine{
 			indent: docs.indent,
 			next: &simpleDocCache{
 				getter: func() simpleDoc {
-					return best(maxLineWidth, docs.indent, docs.next)
+					return best(
+						maxLineWidth,
+						docs.indent*indentWidth,
+						indentWidth,
+						docs.next,
+					)
 				},
 			},
 		}
@@ -88,7 +108,12 @@ func best(maxLineWidth int, lineWidth int, docs *layoutDocs) simpleDoc {
 			text: string(doc),
 			next: &simpleDocCache{
 				getter: func() simpleDoc {
-					return best(maxLineWidth, lineWidth+len(doc), docs.next)
+					return best(
+						maxLineWidth,
+						lineWidth+len(doc),
+						indentWidth,
+						docs.next,
+					)
 				},
 			},
 		}
@@ -109,10 +134,15 @@ type layoutDocs struct {
 // pretty returns the best of all possible layouts for the given document,
 // based on the maximum width for each line
 //
-func pretty(maxLineWidth int, doc Doc) simpleDoc {
+func pretty(maxLineWidth, indentWidth int, doc Doc) simpleDoc {
 	// Determine the best layout for the document,
 	// by starting with just this document,
 	// and no indentation
 	docs := &layoutDocs{indent: 0, doc: doc}
-	return best(maxLineWidth, 0, docs)
+	return best(
+		maxLineWidth,
+		0,
+		indentWidth,
+		docs,
+	)
 }
