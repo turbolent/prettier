@@ -75,6 +75,23 @@ func (i Indent) Flatten() Doc {
 	}
 }
 
+// Dedent decreases the level of indentation
+// for the nested document
+//
+type Dedent struct {
+	Doc Doc
+}
+
+var _ Doc = Dedent{}
+
+func (Dedent) isDoc() {}
+
+func (d Dedent) Flatten() Doc {
+	return Dedent{
+		Doc: d.Doc.Flatten(),
+	}
+}
+
 // Concat combines multiple documents
 //
 type Concat []Doc

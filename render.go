@@ -69,6 +69,18 @@ func best(maxLineWidth, lineWidth, indentWidth int, docs *layoutDocs) simpleDoc 
 			},
 		)
 
+	case Dedent:
+		return best(
+			maxLineWidth,
+			lineWidth,
+			indentWidth,
+			&layoutDocs{
+				indent: docs.indent - 1,
+				doc:    doc.Doc,
+				next:   docs.next,
+			},
+		)
+
 	case Group:
 		newDocs := &layoutDocs{
 			indent: docs.indent,
